@@ -69,7 +69,6 @@ section > h2{margin-bottom:8px}
 .stats{border-top:1px solid var(--line);padding-top:26px}
 .stats .views{display:flex;gap:16px;margin:12px 0 16px;font-size:16px}
 .statline{font-size:18px}
-.statline .when{color:var(--muted);font-size:15.5px}
 .misslist,.weaklist{margin:8px 0 0;padding:0;list-style:none}
 .misslist li,.weaklist li{padding:4px 0;font-size:16.5px}
 .weaklist li span{color:var(--muted);font-size:15px}
@@ -392,7 +391,6 @@ function renderHome(){
 
 const PER = 10;
 function fmtDay(ts){ return new Date(ts).toLocaleDateString(undefined,{month:"short",day:"numeric"}); }
-function fmtDate(ts){ const d=new Date(ts); return d.toLocaleDateString(undefined,{month:"short",day:"numeric"})+" · "+d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"}); }
 function pct(a){ return Math.round(100*a.correct/a.total); }
 
 function renderStats(){
@@ -405,7 +403,7 @@ function renderStats(){
     const a = all[all.length-1];
     const missed = a.items.filter(it=>!it.ok);
     body = `
-      <p class="statline"><b>${a.correct} of ${a.total}</b> correct (${pct(a)}%) <span class="when">· ${fmtDate(a.ts)}</span></p>
+      <p class="statline"><b>${a.correct} of ${a.total}</b> correct (${pct(a)}%)</p>
       <div class="track big" aria-hidden="true"><div class="fill dk" style="width:${pct(a)}%"></div></div>
       ${missed.length
         ? `<h3>Missed</h3><ul class="misslist">${missed.map(it=>{const q=Q.find(x=>x.n===it.n);return `<li>${it.n}. ${esc(q.short)}</li>`}).join("")}</ul>`
