@@ -14,7 +14,7 @@
   --accent:#1f4e8c;
   --ok:#2c6a39; --ok-soft:#eef5ee;
   --bad:#9a2b1f; --bad-soft:#faefed;
-  --series:#6d695f; --grid:#e3dfd4;
+  --series:#6d695f;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -74,18 +74,19 @@ section > h2{margin-bottom:8px}
 .misslist li,.weaklist li{padding:4px 0;font-size:16.5px}
 .weaklist li span{color:var(--muted);font-size:15px}
 .stats h3{margin-top:22px}
-.chart{margin-top:14px;position:relative}
-.chart svg{display:block;width:100%;height:auto;overflow:visible}
-.chart .lab{font-size:11px;fill:var(--muted);font-family:inherit}
-.chart-cap{font-size:15px;color:var(--muted);margin-top:4px}
-table.tbl{width:100%;border-collapse:collapse;font-size:15.5px;margin-top:10px}
-.tbl th,.tbl td{text-align:left;padding:6px 4px;border-bottom:1px solid var(--line2)}
-.tbl th{color:var(--muted);font-weight:400;font-style:italic}
-.tip{
-  position:fixed;z-index:50;pointer-events:none;background:var(--ink);color:#fff;font-size:13.5px;line-height:1.4;
-  padding:6px 9px;border-radius:3px;max-width:260px;opacity:0;transition:opacity .12s
-}
-.tip.show{opacity:1}
+.bars{margin-top:10px}
+.track{height:10px;background:var(--line2)}
+.fill{height:100%;background:var(--series)}
+.fill.dk{background:var(--ink)}
+.track.big{margin-top:10px}
+.brow{display:grid;grid-template-columns:56px 1fr 88px;gap:10px;align-items:center;padding:5px 0;font-size:15.5px}
+.brow .dt{color:var(--ink2);white-space:nowrap}
+.brow .sc{text-align:right;white-space:nowrap}
+.brow .sc span{color:var(--muted);font-size:14px}
+.brow.new .dt,.brow.new .sc b{font-weight:700;color:var(--ink)}
+.pager{display:flex;align-items:baseline;gap:16px;margin-top:10px;padding-top:8px;border-top:1px solid var(--line2);font-size:15px;color:var(--muted)}
+.pager .linkbtn{font-size:15px}
+.pager .cur{color:var(--ink);font-weight:700}
 
 .qtop{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:30px;color:var(--ink2);font-size:15.5px}
 .qnum{font-size:15.5px;font-style:italic;color:var(--ink2)}
@@ -115,7 +116,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:15.5px;margin-top:10px}
 @media (prefers-reduced-motion:reduce){.slide,.feedback.show{animation:none}}
 
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 0}
-.rlist{margin-top:30px;border-top:1px solid var(--line)}
+.rlist{margin-top:30px}
 .ritem{padding:10px 0;border-bottom:1px solid var(--line2)}
 .ritem .qq{font-size:16px;font-weight:700;line-height:1.4}
 .ritem .a{margin-top:3px;font-size:15px;line-height:1.45}
@@ -146,7 +147,6 @@ a.verse.doc:hover,a.verse.doc:focus-visible{color:var(--ink);text-decoration:non
 </header>
 
 <main id="app"></main>
-<div class="tip" id="tip" role="tooltip"></div>
 <script>
 const SECTIONS = [
   {id:"s1", name:"Monday 12/7/26 Test"},
@@ -322,7 +322,7 @@ const ui = {
   shufQ: getPref("shufQ", false),
   shufA: getPref("shufA", false),
   statView: "last",
-  showTable: false,
+  statPage: 0,
 };
 let quiz = null, lastResult = null;
 const app = document.getElementById("app");
@@ -385,27 +385,13 @@ function renderHome(){
   document.getElementById("shufA").onchange=e=>{ui.shufA=e.target.checked;setPref("shufA",ui.shufA);};
   document.getElementById("startBtn").onclick=()=>startQuiz(selectedQs());
   refresh();
+  ui.statPage = 0;
   renderStats();
   window.scrollTo({top:0});
 }
 
-const tip = document.getElementById("tip");
-function showTip(e, html){ tip.innerHTML = html; tip.classList.add("show"); moveTip(e); }
-function moveTip(e){
-  const pad=14, w=tip.offsetWidth, h=tip.offsetHeight;
-  let x=e.clientX+pad, y=e.clientY-h-pad;
-  if(x+w>innerWidth-8) x=e.clientX-w-pad;
-  if(y<8) y=e.clientY+pad;
-  tip.style.left=x+"px"; tip.style.top=y+"px";
-}
-function hideTip(){ tip.classList.remove("show"); }
-function bindTips(scope){
-  scope.querySelectorAll("[data-tip]").forEach(el=>{
-    el.addEventListener("mouseenter",e=>showTip(e, el.dataset.tip));
-    el.addEventListener("mousemove",moveTip);
-    el.addEventListener("mouseleave",hideTip);
-  });
-}
+const PER = 10;
+function fmtDay(ts){ return new Date(ts).toLocaleDateString(undefined,{month:"short",day:"numeric"}); }
 function fmtDate(ts){ const d=new Date(ts); return d.toLocaleDateString(undefined,{month:"short",day:"numeric"})+" · "+d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"}); }
 function pct(a){ return Math.round(100*a.correct/a.total); }
 
@@ -420,10 +406,12 @@ function renderStats(){
     const missed = a.items.filter(it=>!it.ok);
     body = `
       <p class="statline"><b>${a.correct} of ${a.total}</b> correct (${pct(a)}%) <span class="when">· ${fmtDate(a.ts)}</span></p>
+      <div class="track big" aria-hidden="true"><div class="fill dk" style="width:${pct(a)}%"></div></div>
       ${missed.length
-        ? `<h3>Missed</h3><ul class="misslist">${missed.map(it=>{const q=Q.find(x=>x.n===it.n);return `<li>Question ${it.n} · ${esc(q.short)}</li>`}).join("")}</ul>`
+        ? `<h3>Missed</h3><ul class="misslist">${missed.map(it=>{const q=Q.find(x=>x.n===it.n);return `<li>${it.n}. ${esc(q.short)}</li>`}).join("")}</ul>`
         : `<p style="margin-top:8px">You didn’t miss any.</p>`}`;
   } else {
+    const pages = Math.ceil(all.length/PER);
     const best = Math.max(...all.map(pct));
     const avg = Math.round(all.reduce((s,a)=>s+pct(a),0)/all.length);
     const per = {};
@@ -431,14 +419,12 @@ function renderStats(){
     const weak = Object.entries(per).map(([n,v])=>({n:+n, ...v, acc:v.ok/v.seen})).filter(w=>w.acc<1)
       .sort((a,b)=>a.acc-b.acc || b.seen-a.seen).slice(0,6);
     body = `
-      <p class="statline">${plural(all.length,'quiz').replace('quizs','quizzes')} taken · average <b>${avg}%</b> · best <b>${best}%</b></p>
-      <div class="chart" id="chart">${barChart(all)}</div>
-      <p class="chart-cap">Score on each quiz${all.length>20?' (last 20)':''}. <button class="linkbtn" id="tblBtn" style="font-size:inherit">${ui.showTable?'Hide the list':'Show as a list'}</button></p>
-      ${ui.showTable?`<table class="tbl"><thead><tr><th>#</th><th>Date</th><th>Score</th></tr></thead><tbody>
-        ${all.map((a,i)=>`<tr><td>${i+1}</td><td>${fmtDate(a.ts)}</td><td>${a.correct} of ${a.total} (${pct(a)}%)</td></tr>`).reverse().join("")}</tbody></table>`:""}
+      <p class="statline">${plural(all.length,'quiz').replace('quizs','quizzes')} taken. Average <b>${avg}%</b>, best <b>${best}%</b>.</p>
+      <div class="bars">${all.slice().reverse().slice(ui.statPage*PER,(ui.statPage+1)*PER).map((a,i)=>{const cur=ui.statPage===0&&i===0;return `<div class="brow${cur?' new':''}"><span class="dt">${fmtDay(a.ts)}</span><div class="track" aria-hidden="true"><div class="fill${cur?' dk':''}" style="width:${pct(a)}%"></div></div><span class="sc"><b>${pct(a)}%</b> <span>${a.correct}/${a.total}</span></span></div>`}).join("")}</div>
+      ${pages>1?`<div class="pager"><span>Page</span>${Array.from({length:pages},(_,i)=>i===ui.statPage?`<span class="cur" aria-current="page">${i+1}</span>`:`<button class="linkbtn" data-page="${i}">${i+1}</button>`).join("")}</div>`:""}
       <h3>Questions you miss most</h3>
       ${weak.length
-        ? `<ul class="weaklist">${weak.map(w=>{const q=Q.find(x=>x.n===w.n);return `<li>Question ${w.n} · ${esc(q.short)} <span>right ${w.ok} of ${w.seen}</span></li>`}).join("")}</ul>`
+        ? `<ul class="weaklist">${weak.map(w=>{const q=Q.find(x=>x.n===w.n);return `<li>${w.n}. ${esc(q.short)} <span>missed ${w.seen-w.ok} of ${w.seen}</span></li>`}).join("")}</ul>`
         : `<p style="margin-top:8px">None yet. You’ve answered every question correctly so far.</p>`}`;
   }
   el.innerHTML = `
@@ -449,33 +435,12 @@ function renderStats(){
       <button class="linkbtn ${ui.statView==='all'?'on':''}" data-view="all">All quizzes</button>
     </div>`:""}
     ${body}`;
-  el.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{ui.statView=b.dataset.view;renderStats();});
-  const tb = el.querySelector("#tblBtn"); if(tb) tb.onclick=()=>{ui.showTable=!ui.showTable;renderStats();};
+  el.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{ui.statView=b.dataset.view;ui.statPage=0;renderStats();});
+  el.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{ui.statPage=+b.dataset.page;renderStats();});
   const rb = el.querySelector("#resetBtn"); if(rb) rb.onclick=()=>{
     if(rb.dataset.armed){ store={attempts:[]}; save(store); renderStats(); }
     else { rb.dataset.armed="1"; rb.textContent="Click again to erase all results"; setTimeout(()=>{ if(rb.isConnected){ delete rb.dataset.armed; rb.textContent="Reset"; } },3000); }
   };
-  bindTips(el);
-}
-
-function barChart(all){
-  const list = all.slice(-20), offset = all.length - list.length;
-  const W=420, H=150, L=34, R=6, T=10, B=22, pw=W-L-R, ph=H-T-B;
-  const band = pw/Math.max(list.length,5), bw = Math.min(26, band-4);
-  const y = v => T + ph - ph*v/100;
-  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Score on each quiz, as a percent">`;
-  [0,50,100].forEach(v=>{ s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)" stroke-width="1"/>`;
-    s+=`<text class="lab" x="${L-8}" y="${y(v)+4}" text-anchor="end">${v}%</text>`; });
-  const every = Math.ceil(list.length/10);
-  list.forEach((a,i)=>{
-    const p = pct(a), cx = L + band*i + band/2, x = cx - bw/2, top = y(p), h = T+ph-top;
-    if(h>0) s+=`<rect x="${x}" y="${top}" width="${bw}" height="${h}" fill="var(--series)"/>`;
-    else s+=`<line x1="${x}" x2="${x+bw}" y1="${T+ph}" y2="${T+ph}" stroke="var(--series)" stroke-width="2"/>`;
-    if(i%every===0 || i===list.length-1) s+=`<text class="lab" x="${cx}" y="${H-6}" text-anchor="middle">${offset+i+1}</text>`;
-    const t = `<b>Quiz ${offset+i+1}: ${p}%</b><br>${a.correct} of ${a.total} correct<br>${fmtDate(a.ts)}`;
-    s+=`<rect x="${L+band*i}" y="${T}" width="${band}" height="${ph}" fill="transparent" data-tip="${esc(t)}"/>`;
-  });
-  return s + `</svg>`;
 }
 
 function startQuiz(qs){
@@ -565,7 +530,7 @@ function renderResults(){
           <div class="ritem ${r.ok?'y':'n'}">
             <div class="qq"><span class="ic" role="img" aria-label="${r.ok?'Correct':'Missed'}">${r.ok?ICON_OK:ICON_X}</span> ${q.n}. ${unlink(q.q)}</div>
             <div class="a"><span class="lbl">You:</span> <span class="${r.ok?'okc':'badc'}">${unlink(r.picked)}</span></div>${r.ok?'':`
-            <div class="a"><span class="lbl">Right:</span> <span class="okc">${unlink(r.right)}</span></div>`}
+            <div class="a"><span class="lbl">Correct:</span> <span class="okc">${unlink(r.right)}</span></div>`}
           </div>`}).join("")}
       </div>
     </div>`;
