@@ -116,21 +116,14 @@ table.tbl{width:100%;border-collapse:collapse;font-size:15.5px;margin-top:10px}
 
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 0}
 .rlist{margin-top:30px;border-top:1px solid var(--line)}
-.ritem{padding:16px 0;border-bottom:1px solid var(--line2)}
-.ic{display:none}
-.ic svg{display:block}
-.ritem .st{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px}
-.st .ic,.lab .ic{display:inline-flex}
-.ritem.y .st{color:var(--ok)} .ritem.n .st{color:var(--bad)}
-.ritem .qq{font-size:17px;font-weight:700;margin-top:4px}
-.ans{position:relative;display:block;margin-top:18px;padding:15px 14px 11px;border:1px solid var(--line);border-radius:3px;background:var(--white);font-size:16px;color:var(--ink)}
-.ans .lab{position:absolute;top:-11px;left:10px;display:inline-flex;align-items:center;gap:5px;padding:1px 9px 1px 7px;border:1px solid;border-radius:11px;background:var(--white);font-size:13px;font-weight:700;line-height:1.5}
-.ans.no{border-color:var(--bad);background:var(--bad-soft);box-shadow:inset 0 0 0 1px var(--bad)}
-.ans.no .lab{color:var(--bad)}
-.ans.right,.ans.ok{border-color:var(--ok);background:var(--ok-soft);box-shadow:inset 0 0 0 1px var(--ok)}
-.ans.right .lab,.ans.ok .lab{color:var(--ok)}
-.ritem .ex{font-size:16px;line-height:1.5;color:var(--ink2);margin:14px 0 0;padding:2px 0 2px 14px;border-left:3px solid var(--ink2)}
-.ritem .ex .rf{color:var(--muted);font-style:italic;font-size:14.5px}
+.ritem{padding:10px 0;border-bottom:1px solid var(--line2)}
+.ritem .qq{font-size:16px;font-weight:700;line-height:1.4}
+.ritem .a{margin-top:3px;font-size:15px;line-height:1.45}
+.ritem .lbl{margin-right:4px;font-size:13px;color:var(--muted)}
+.ritem .ic{display:inline-flex;vertical-align:-2px}
+.ritem .ic svg{display:block}
+.ritem.y .ic,.okc{color:var(--ok)}
+.ritem.n .ic,.badc{color:var(--bad)}
 
 @media (max-width:560px){
   body{font-size:17.5px}
@@ -561,7 +554,7 @@ function renderResults(){
   const missed = res.filter(r=>!r.ok);
   app.innerHTML = `
     <div class="res slide">
-      <h1>${attempt.correct} of ${attempt.total} correct</h1>
+      <h1>${attempt.correct} of ${attempt.total} correct (${Math.round(attempt.correct/attempt.total*100)}%)</h1>
       <div class="actions">
         ${missed.length?`<button class="btn" id="retryMissed">Retry the ${missed.length} I missed</button>`:''}
         <button class="${missed.length?'btn-ghost':'btn'}" id="again">Retake these questions</button>
@@ -570,10 +563,9 @@ function renderResults(){
       <div class="rlist">
         ${res.map(r=>{const q=Q.find(x=>x.n===r.n);return `
           <div class="ritem ${r.ok?'y':'n'}">
-            <div class="st"><span class="ic">${r.ok?ICON_OK:ICON_X}</span>${r.ok?'Correct':'Missed'}</div>
-            <div class="qq">${q.n}. ${unlink(q.q)}</div>
-            ${r.ok?`<div class="ans you ok"><span class="lab">Your answer</span><span class="at">${unlink(r.picked)}</span></div>`
-                  :`<div class="ans you no"><span class="lab"><span class="ic">${ICON_X}</span>Your answer</span><span class="at">${unlink(r.picked)}</span></div><div class="ans right"><span class="lab"><span class="ic">${ICON_OK}</span>Correct answer</span><span class="at">${unlink(r.right)}</span></div><div class="ex">${unlink(q.x)} <span class="rf">(${unlink(q.r)})</span></div>`}
+            <div class="qq"><span class="ic" role="img" aria-label="${r.ok?'Correct':'Missed'}">${r.ok?ICON_OK:ICON_X}</span> ${q.n}. ${unlink(q.q)}</div>
+            <div class="a"><span class="lbl">You:</span> <span class="${r.ok?'okc':'badc'}">${unlink(r.picked)}</span></div>${r.ok?'':`
+            <div class="a"><span class="lbl">Right:</span> <span class="okc">${unlink(r.right)}</span></div>`}
           </div>`}).join("")}
       </div>
     </div>`;
