@@ -38,7 +38,6 @@ p{margin:0}
 .empty{color:var(--ink2)}
 
 section{margin-top:34px}
-section:first-child{margin-top:0}
 section > h2{margin-bottom:8px}
 .head-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:8px}
 
@@ -51,6 +50,12 @@ section > h2{margin-bottom:8px}
 .checks input[type=checkbox]{flex:none;width:17px;height:17px;margin:0;accent-color:var(--ink);transform:translateY(2px);cursor:pointer}
 .checks input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .checks .ct{color:var(--muted);font-size:15.5px}
+.checks input[type=checkbox]:indeterminate{-webkit-appearance:none;appearance:none;border:0;border-radius:3px;background:linear-gradient(#fff,#fff) center/9px 2px no-repeat var(--ink)}
+.sub{list-style:none;margin:0 0 4px;padding:0 0 0 28px}
+.trow{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.trow label{flex:1;min-width:0;display:grid;grid-template-columns:auto 1fr;column-gap:11px;row-gap:0;align-items:baseline}
+.trow input{grid-row:1 / 3;align-self:start}
+.trow .linkbtn{flex:none;font-size:15.5px}
 
 .btn{
   background:var(--ink);color:#fff;border:1px solid var(--ink);border-radius:3px;
@@ -136,6 +141,8 @@ a.verse:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-
 a.verse.doc{white-space:normal}
 a.verse.doc,a.verse.doc:visited{color:var(--accent)}
 a.verse.doc:hover,a.verse.doc:focus-visible{color:var(--ink);text-decoration:none}
+.vnote{margin:0;font-size:15.5px;line-height:1.55;color:var(--ink2)}
+.vnote b{color:var(--ink);font-weight:600}
 </style>
 </head>
 <body>
@@ -147,158 +154,161 @@ a.verse.doc:hover,a.verse.doc:focus-visible{color:var(--ink);text-decoration:non
 
 <main id="app"></main>
 <script>
-const SECTIONS = [
-  {id:"s1", name:"Monday 12/7/26 Test"},
-  {id:"s2", name:"Chapters 8–10"},
-  {id:"s3", name:"Chapter 12"},
-  {id:"s4", name:"Chapter 13"},
-  {id:"s5", name:"Chapters 23–24"},
+const TESTS = [
+  {id:"t1", name:"Monday 12/7/26 Test", parts:[
+    {id:"p1", name:"Questions 1–9"},
+    {id:"p2", name:"Chapters 8–10"},
+    {id:"p3", name:"Chapter 12"},
+    {id:"p4", name:"Chapter 13"},
+    {id:"p5", name:"Chapters 23–24"}]},
 ];
+const ALL_PARTS = TESTS.flatMap(t=>t.parts.map(p=>p.id));
+const DEFAULT_PARTS = TESTS[0].parts.map(p=>p.id);
 const TF = ["True","False"];
 const Q = [
-{n:1, s:"s1", short:"Magisterium",
+{n:1, t:"t1", p:"p1", short:"Magisterium",
  q:"What does the term ‘Magisterium’ refer to?",
  o:["The teaching office of the Church. This refers to the teaching authority which Christ gave to the Church to teach authentically, which is exercised collectively by the Pope and the bishops in union with him.",
     "The entire body of teachings which the Pope and Bishops received from the Apostles.",
     "Moments in the Gospel accounts where Jesus is specifically speaking in the role of a teacher.",
     "The collective inspiration which the Apostles received on the day of Pentecost."], a:0,
  x:"The Magisterium is the Church’s living teaching office. It is the Pope and the bishops in communion with him, and its task is to interpret the Word of God authentically. It serves the deposit of faith; it is not the deposit itself.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__PM.HTM#:~:text=85,-%22The%20task%20of' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 85, opens vatican.va in a new tab'>85</a>–<a class='verse' href='https://www.vatican.va/archive/ENG0015/__PM.HTM#:~:text=86,-%22Yet%20this%20Magisterium' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 86, opens vatican.va in a new tab'>86</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__PN.HTM#:~:text=100,-The%20task%20of' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 100, opens vatican.va in a new tab'>100</a>"},
-{n:2, s:"s1", short:"The Trinity",
+{n:2, t:"t1", p:"p1", short:"The Trinity",
  q:"Which phrase most accurately expresses the truth of the Trinity?",
  o:["We say there are three persons in the Trinity but ultimately it is just one Person with three ways of acting.",
     "There are three separate gods in the Trinity.",
     "There are three distinct Persons in the Trinity, but remain one substance, namely, one God.",
     "The Father is really God, whereas the Son and Holy Spirit are not fully God, but remain united with the Father in distinct ways."], a:2,
  x:"God is one in substance and three in Persons. The Persons are really distinct by their relations of origin, yet each is wholly God. There are not three gods, not three modes of one Person, and not three parts.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P17.HTM#:~:text=253,-The%20Trinity%20is' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 253, opens vatican.va in a new tab'>253</a>–<a class='verse' href='https://www.vatican.va/archive/ENG0015/__P17.HTM#:~:text=255,-The%20divine%20persons' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 255, opens vatican.va in a new tab'>255</a>"},
-{n:3, s:"s1", short:"Matter",
+{n:3, t:"t1", p:"p1", short:"Matter",
  q:"What best expresses how the Catholic Church views matter (the material/physical realm - including our bodies)?",
  o:["Matter is evil and only the spirit is good.",
     "The physical world/matter is an illusion, and has no value whatsoever; only spiritual things are real and have value.",
     "God Himself created the visible physical world and so is good. The material and spiritual world reflects God’s infinite goodness and wisdom.",
     "Matter was created by a lesser flawed god and not the true, distant God. The true God created the spirit, which is good; the lesser god created matter which is evil."], a:2,
  x:"Because God created the visible world, it is good. The human body shares in the dignity of the image of God and is destined for the resurrection. Views of matter as evil (<a class='verse doc' href='https://www.catholic.com/qa/whats-gnosticism' target='_blank' rel='noopener noreferrer' aria-label='What’s Gnosticism?, Catholic Answers, opens catholic.com in a new tab'>Gnostic</a>, <a class='verse doc' href='https://www.catholic.com/encyclopedia/manichaeism' target='_blank' rel='noopener noreferrer' aria-label='Manichaeism, Catholic Encyclopedia, opens catholic.com in a new tab'>Manichaean</a>) are rejected.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P19.HTM#:~:text=285,-Since%20the%20beginning' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 285, opens vatican.va in a new tab'>285</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P19.HTM#:~:text=299,-Because%20God%20creates' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 299, opens vatican.va in a new tab'>299</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1A.HTM#:~:text=339,-Each%20creature%20possesses' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 339, opens vatican.va in a new tab'>339</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1B.HTM#:~:text=364,-The%20human%20body' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 364, opens vatican.va in a new tab'>364</a>"},
-{n:4, s:"s1", short:"God & creation",
+{n:4, t:"t1", p:"p1", short:"God & creation",
  q:"What best expresses God’s relationship with creation?",
  o:["All of creation is an extension of God Himself, and is divine. Essentially, all of creation is God.",
     "God is like a “watchmaker” – He creates the world, gives it it’s laws and order, and sets it in motion; He then abandons it to its own laws and is no longer present to it.",
     "God freely creates everything ex nihilo (meaning ‘out of nothing’). God is infinitely greater than all His works, but is intimately present to His creatures, and at every moment upholds and sustains them in being.",
     "The created universe is eternal with God; God simply fashioned the world out of matter which was always in existence."], a:2,
  x:"God creates freely and out of nothing. He transcends creation yet is present to it, upholding it in being at every moment. This excludes <a class='verse doc' href='https://www.catholic.com/qa/what-is-pantheism' target='_blank' rel='noopener noreferrer' aria-label='What is pantheism?, Catholic Answers, opens catholic.com in a new tab'>pantheism</a>, <a class='verse doc' href='https://www.catholicculture.org/culture/library/dictionary/index.cfm?id=33008' target='_blank' rel='noopener noreferrer' aria-label='Deism, Catholic Culture Dictionary, opens catholicculture.org in a new tab'>deism</a>, and the idea of eternal, uncreated matter.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P19.HTM#:~:text=285,-Since%20the%20beginning' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 285, opens vatican.va in a new tab'>285</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P19.HTM#:~:text=296,-We%20believe%20that' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 296, opens vatican.va in a new tab'>296</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P19.HTM#:~:text=300,-God%20is%20infinitely' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 300, opens vatican.va in a new tab'>300</a>–<a class='verse' href='https://www.vatican.va/archive/ENG0015/__P19.HTM#:~:text=301,-With%20creation' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 301, opens vatican.va in a new tab'>301</a>"},
-{n:5, s:"s1", short:"Angels",
+{n:5, t:"t1", p:"p1", short:"Angels",
  q:"What is an angel?",
  o:["A mythical creature found in archaic literature, but has no real existence outside of these fictional sources.",
     "The existence of angels is a truth of faith. They are purely spiritual creatures with intellect and will, and surpass in perfection all visible creatures.",
     "‘Angel’ is a term to express what the saints become once they enter into heavenly glory after life on this earth. The human saints turn into angels after death.",
     "To believe in the existence of angels is optional. The Church leaves it up to the discretion of every believer."], a:1,
  x:"The existence of angels is a truth of faith. They are purely spiritual, personal, immortal creatures with intellect and will, surpassing all visible creatures. Human souls do not become angels.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1A.HTM#:~:text=328,-The%20existence%20of' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 328, opens vatican.va in a new tab'>328</a>–<a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1A.HTM#:~:text=330,-As%20purely%20spiritual' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 330, opens vatican.va in a new tab'>330</a>"},
-{n:6, s:"s1", short:"Original Sin",
+{n:6, t:"t1", p:"p1", short:"Original Sin",
  q:"What best defines ‘Original Sin’?",
  o:["A weakness of humanity arising from its uncompletedness as a still evolving species. It will eventually resolve itself.",
     "It is essentially a bad example from our first parents; but we can overcome this on our own simply by using our own free will for good.",
     "The personal sin committed by the first human beings; it is transmitted by propagation, not by imitation. For future generations, it is a sin “contracted” and not “committed” — a state and not an act.",
     "A generic term to express a sinful environment in which one may live in."], a:2,
  x:"Original sin is transmitted to all humanity by propagation, not imitation. In us it is “contracted” rather than “committed.” It is a state (the loss of original holiness and justice), not a personal act.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1C.HTM#:~:text=404,-How%20did%20the' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 404, opens vatican.va in a new tab'>404</a>–<a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1C.HTM#:~:text=405,-Although%20it%20is' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 405, opens vatican.va in a new tab'>405</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1C.HTM#:~:text=419,-%22We%20therefore%20hold' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 419, opens vatican.va in a new tab'>419</a>"},
-{n:7, s:"s1", short:"Total depravity?", tf:true,
+{n:7, t:"t1", p:"p1", short:"Total depravity?", tf:true,
  q:"It is part of the Catholic viewpoint that, after the Fall, human nature has become completely depraved and corrupt; nevertheless, the grace of Christ covers over this depravity – as snow covers over filth.",
  a:1,
  x:"False. Catholic teaching holds that human nature was wounded by the Fall, not totally corrupted, and that grace truly heals and transforms the soul rather than merely covering it over.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1C.HTM#:~:text=405,-Although%20it%20is' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 405, opens vatican.va in a new tab'>405</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P3N.HTM#:~:text=1263,-By%20Baptism%20all' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 1263, opens vatican.va in a new tab'>1263</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P6Y.HTM#:~:text=1989,-The%20first%20work' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 1989, opens vatican.va in a new tab'>1989</a>"},
-{n:8, s:"s1", short:"Concupiscence",
+{n:8, t:"t1", p:"p1", short:"Concupiscence",
  q:"What is ‘concupiscence’?",
  o:["A term signifying the total depravity of our state after the Fall.",
     "This term refers to the reality that once one feels the desire to sin, they are then immediately guilty of a sin.",
     "It is the guilt inherited by our first parent’s sin, which Baptism does not wash away.",
     "The disorder in our human appetites and desires as the result of Original Sin. Concupiscence is not a sin in itself, but is the inclination towards sin, and can lead to sin."], a:3,
  x:"Concupiscence is the disordered inclination of the appetites that remains even after Baptism as an effect of original sin. It is not itself a sin; it can lead to sin and is resisted with the help of grace.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1C.HTM#:~:text=405,-Although%20it%20is' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 405, opens vatican.va in a new tab'>405</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P3N.HTM#:~:text=1264,-Yet%20certain%20temporal' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 1264, opens vatican.va in a new tab'>1264</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P8P.HTM#:~:text=2515,-Etymologically' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 2515, opens vatican.va in a new tab'>2515</a>"},
-{n:9, s:"s1", short:"Hypostatic union",
+{n:9, t:"t1", p:"p1", short:"Hypostatic union",
  q:"What statement best expresses the ‘hypostatic union’ and the truth of who Jesus Christ is?",
  o:["He is fully God, whereas He only appeared to be a human being.",
     "In Jesus Christ we find a unique mixture of human and divine elements; not fully human nor divine, but a mixture of the two.",
     "Jesus was created by the Father before all others and is superior to creation, yet is lower than the Father.",
     "Jesus is true God and true man, without confusion or mixture of the two natures, yet remains one divine Person."], a:3,
  x:"In the hypostatic union, the one divine Person of the Word unites two complete natures, divine and human, without confusion, change, division, or separation (<a class='verse doc' href='https://www.papalencyclicals.net/councils/ecum04.htm#Definition%20of%20the%20faith' target='_blank' rel='noopener noreferrer' aria-label='Council of Chalcedon, 451, the Definition of the faith, opens papalencyclicals.net in a new tab'>Council of Chalcedon, 451</a>).", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1J.HTM#:~:text=464,-The%20unique%20and' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 464, opens vatican.va in a new tab'>464</a>–<a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1J.HTM#:~:text=469,-The%20Church%20thus' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 469, opens vatican.va in a new tab'>469</a>"},
-{n:10, s:"s2", short:"Ascension",
+{n:10, t:"t1", p:"p2", short:"Ascension",
  q:"What is the Ascension?",
  o:["Forty days after Jesus’ resurrection He “ascended” to the right hand of the Father.",
     "Mary’s entrance into eternal life.",
     "The sending of the Holy Spirit upon the Apostles and Mary.",
     "Entrance into a miraculous and mystical state which some of the saints have experienced."], a:0,
  x:"Forty days after Easter, Christ entered heaven in His glorified humanity, where He is seated at the right hand of the Father.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1T.HTM#:~:text=659,-%22So%20then%20the' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 659, opens vatican.va in a new tab'>659</a>–<a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1T.HTM#:~:text=664,-Being%20seated%20at' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 664, opens vatican.va in a new tab'>664</a>; <a class='verse' href='https://bible.usccb.org/bible/acts/1?3#52001003' target='_blank' rel='noopener noreferrer' aria-label='Acts 1:3–11, opens the USCCB Bible in a new tab'>Acts 1:3–11</a>"},
-{n:11, s:"s2", short:"Forgiveness of sins",
+{n:11, t:"t1", p:"p2", short:"Forgiveness of sins",
  q:"God offers us forgiveness of sins. What is the main reason why can a person have his sins forgiven?",
  o:["Doing good works and treating others with charity.",
     "Because Jesus Christ offered His life on the Cross in order to atone for our sins. In this act He enables us to experience the forgiveness of our sins.",
     "God offers some people forgiveness, but this is not offered to all. God desires some to be damned and others to be saved.",
     "The Church teaches that absolutely everyone is saved, whether they choose to accept God’s forgiveness or not."], a:1,
  x:"Christ’s death on the Cross is the sacrifice that atones for sin, and His redemption is offered to all people. We receive forgiveness by accepting it, not by earning it.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1O.HTM#:~:text=605,-At%20the%20end' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 605, opens vatican.va in a new tab'>605</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1O.HTM#:~:text=613,-Christ%27s%20death%20is' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 613, opens vatican.va in a new tab'>613</a>–<a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1O.HTM#:~:text=617,-The%20Council%20of' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 617, opens vatican.va in a new tab'>617</a>"},
-{n:12, s:"s2", short:"Resurrection",
+{n:12, t:"t1", p:"p2", short:"Resurrection",
  q:"What do we believe about Jesus’ resurrection?",
  o:["The resurrection is simply symbolic, and was not a literal or historical event. This symbolic event greatly reawakened the faith of the Apostles.",
     "Jesus was resuscitated three days after His crucifixion – He returned to the exact same physical state that He was in during His whole earthly life.",
     "We know Jesus rose from the dead simply because of the empty tomb; we do not have any testimony that He was seen after He rose from the dead, but the empty tomb is sufficient testimony.",
     "After Jesus rose from the dead, He entered into an entirely new state of existence in His glorified body and was no longer restrained by space or time; it is the definitive proof that He is the Son of God."], a:3,
  x:"The Risen Christ was not merely resuscitated to earthly life: His body is glorified, no longer bound by space and time. The resurrection is a real, historical event attested by witnesses who saw Him.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1S.HTM#:~:text=639,-The%20mystery%20of' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 639, opens vatican.va in a new tab'>639</a>–<a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1S.HTM#:~:text=646,-Christ%27s%20Resurrection%20was' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 646, opens vatican.va in a new tab'>646</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1S.HTM#:~:text=651,-%22If%20Christ%20has' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 651, opens vatican.va in a new tab'>651</a>"},
-{n:13, s:"s2", short:"Holy Spirit", tf:true,
+{n:13, t:"t1", p:"p2", short:"Holy Spirit", tf:true,
  q:"The Holy Spirit is the third Person of the Blessed Trinity, and is <u>equally</u> God with the Father and the Son:",
  a:0,
  x:"True. The Holy Spirit is consubstantial with the Father and the Son, and “with the Father and the Son is adored and glorified” (<a class='verse doc' href='https://www.papalencyclicals.net/councils/ecum02.htm#:~:text=co%2Dworshipped%20and%20co%2Dglorified' target='_blank' rel='noopener noreferrer' aria-label='Nicene Creed, the text of the Council of Constantinople, 381, opens papalencyclicals.net in a new tab'>Nicene Creed</a>).", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P17.HTM#:~:text=245,-The%20apostolic%20faith' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 245, opens vatican.va in a new tab'>245</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1Y.HTM#:~:text=685,-To%20believe%20in' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 685, opens vatican.va in a new tab'>685</a>"},
-{n:14, s:"s2", short:"Pentecost",
+{n:14, t:"t1", p:"p2", short:"Pentecost",
  q:"In the Catholic Church what does ‘Pentecost’ refer to?",
  o:["The day when the Apostles and Mary were gathered in the upper room and received the promised gift of the Holy Spirit. Strengthened by the Spirit they became bold witnesses to the Jesus’ Resurrection.",
     "The moment after Jesus’ Resurrection when He returned to the right hand of the Father.",
     "The moment in history when Jesus was conceived in the womb of the Blessed Virgin Mary.",
     "This refers to the 40 days after Jesus’ birth when He was presented in the Temple."], a:0,
  x:"At Pentecost, fifty days after Easter, the promised Holy Spirit came upon the Apostles and Mary gathered in prayer, and the Church began her bold public witness.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P24.HTM#:~:text=731,-On%20the%20day' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 731, opens vatican.va in a new tab'>731</a>–<a class='verse' href='https://www.vatican.va/archive/ENG0015/__P24.HTM#:~:text=732,-On%20that%20day' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 732, opens vatican.va in a new tab'>732</a>; <a class='verse' href='https://bible.usccb.org/bible/acts/1?14#52001014' target='_blank' rel='noopener noreferrer' aria-label='Acts 1:14, opens the USCCB Bible in a new tab'>Acts 1:14</a>, <a class='verse' href='https://bible.usccb.org/bible/acts/2?1#52002001' target='_blank' rel='noopener noreferrer' aria-label='Acts 2:1–4, opens the USCCB Bible in a new tab'>2:1–4</a>"},
-{n:15, s:"s3", short:"Mother of God",
+{n:15, t:"t1", p:"p3", short:"Mother of God",
  q:"Which statement is true regarding Mary’s Motherhood?",
  o:["Mary is only the mother of Jesus’ human nature which needs to be separated from His divine nature: therefore, she is mother of only half of Jesus Christ.",
     "Mary is the “Mother of God”. She did not give birth to a nature, but to a divine <i>person</i>, namely, the one person of Jesus Christ, who is God incarnate.",
     "We view Jesus as two separate persons – one human and one divine – Mary is only the mother of the human person, not the divine person.",
     "Jesus became divine later in life, at His baptism, and so Mary gave birth to simply a human being who later became divine."], a:1,
  x:"A mother gives birth to a person, not a nature. Since the one Mary bore is the divine Person of the Word made flesh, she is truly Theotokos, Mother of God (<a class='verse doc' href='https://www.papalencyclicals.net/councils/ecum03.htm#Twelve%20Anathemas%20Proposed%20by%20Cyril%20and%20accepted%20by%20the%20Council%20of%20Ephesus:~:text=If%20anyone%20does%20not%20confess%20that%20Emmanuel%20is,of%20God%20become%20flesh' target='_blank' rel='noopener noreferrer' aria-label='Council of Ephesus, 431, the first anathema of Cyril, opens papalencyclicals.net in a new tab'>Council of Ephesus, 431</a>). This does not make her the source of his divinity: the Son is eternal, and from her he received his humanity.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1J.HTM#:~:text=466,-The%20Nestorian%20heresy' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 466, opens vatican.va in a new tab'>466</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1K.HTM#:~:text=495,-Called%20in%20the' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 495, opens vatican.va in a new tab'>495</a>"},
-{n:16, s:"s3", short:"Immaculate Conception",
+{n:16, t:"t1", p:"p3", short:"Immaculate Conception",
  q:"What is the “Immaculate Conception”?",
  o:["This refers to the miraculous nature of Christ’s birth.",
     "The moment when Jesus was conceived in the womb of Mary.",
     "The fact that the Blessed Virgin Mary was conceived without the stain of Original Sin.",
     "This is when a baptized mother conceives in her womb and has the intention to have her child educated in the faith."], a:2,
  x:"Mary was preserved from original sin from the first moment of her conception, by a singular grace in view of the merits of Christ (<a class='verse doc' href='https://www.papalencyclicals.net/pius09/p9ineff.htm#:~:text=We%20declare%2C%20pronounce%2C%20and%20define%20that%20the%20doctrine,by%20all%20the%20faithful' target='_blank' rel='noopener noreferrer' aria-label='Ineffabilis Deus, the solemn definition, opens papalencyclicals.net in a new tab'>solemnly defined in 1854</a>). It is often confused with the virginal conception of Jesus.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1K.HTM#:~:text=490,-To%20become%20the' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 490, opens vatican.va in a new tab'>490</a>–<a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1K.HTM#:~:text=492,-The%20%22splendour' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 492, opens vatican.va in a new tab'>492</a>"},
-{n:17, s:"s3", short:"Worship of Mary", tf:true,
+{n:17, t:"t1", p:"p3", short:"Worship of Mary", tf:true,
  q:"Catholics worship Mary as equal to God.", a:1,
  x:"False. Worship (latria) belongs to God alone. Devotion to Mary differs essentially from the adoration given to the Trinity.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P2C.HTM#:~:text=971,-%22All%20generations%20will' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 971, opens vatican.va in a new tab'>971</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P7D.HTM#:~:text=2097,-To%20adore%20God' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 2097, opens vatican.va in a new tab'>2097</a>"},
-{n:18, s:"s3", short:"Hyperdulia", tf:true,
+{n:18, t:"t1", p:"p3", short:"Hyperdulia", tf:true,
  q:"Catholics offer to Mary a type of veneration called “hyper-dulia”, meaning a type of veneration higher than all other saints; this is not “latria” which is worship reserved to God alone.", a:0,
  x:"True. Hyperdulia is the special veneration given to Mary, above the veneration (dulia) given to the other saints, but essentially different from latria.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P2C.HTM#:~:text=971,-%22All%20generations%20will' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 971, opens vatican.va in a new tab'>971</a>"},
-{n:19, s:"s3", short:"Perpetual virginity", tf:true,
+{n:19, t:"t1", p:"p3", short:"Perpetual virginity", tf:true,
  q:"The Catholic Church believes in Mary’s <i>perpetual</i> virginity, namely, that she was a virgin before, during, and after the Birth of Christ.", a:0,
  x:"True. The Church professes Mary’s real and perpetual virginity, before, during, and after the birth of Christ.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1K.HTM#:~:text=496,-From%20the%20first' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 496, opens vatican.va in a new tab'>496</a>–<a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1K.HTM#:~:text=501,-Jesus%20is%20Mary%27s%20only' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 501, opens vatican.va in a new tab'>501</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P1K.HTM#:~:text=510,-Mary%20%22remained' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 510, opens vatican.va in a new tab'>510</a>"},
-{n:20, s:"s3", short:"Assumption",
+{n:20, t:"t1", p:"p3", short:"Assumption",
  q:"What is the “Assumption”?",
  o:["The belief that we truly do not know what happened to the body of Mary after her death, and so we “assume” that she was taken to heaven.",
     "When Jesus returned to the right hand of the Father after His resurrection.",
     "The unique charism which some saints have manifested in visibly being lifted off the ground temporarily.",
     "When the course of Mary’s earthly life was finished, she was taken up body and soul into heavenly glory, which is an anticipation of the resurrection of other Christians."], a:3,
  x:"<a class='verse doc' href='https://www.papalencyclicals.net/pius12/p12munif.htm#:~:text=we%20pronounce%2C%20declare%2C%20and%20define%20it%20to%20be%20a%20divinely%20revealed%20dogma,assumed%20body%20and%20soul%20into%20heavenly%20glory' target='_blank' rel='noopener noreferrer' aria-label='Munificentissimus Deus, the solemn definition, opens papalencyclicals.net in a new tab'>Solemnly defined in 1950</a>: when the course of her earthly life was finished, Mary was taken up body and soul into heavenly glory. This is a singular share in her Son’s resurrection and an anticipation of ours.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P2C.HTM#:~:text=966,-%22Finally%20the%20Immaculate' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 966, opens vatican.va in a new tab'>966</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P2C.HTM#:~:text=974,-The%20Most%20Blessed' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 974, opens vatican.va in a new tab'>974</a>"},
-{n:21, s:"s4", short:"Cremated remains", tf:true,
+{n:21, t:"t1", p:"p4", short:"Cremated remains", tf:true,
  q:"Scattering the ashes of a deceased loved one and/or placing their ashes in jewelry or leaving the urn at the home of family members are all good and acceptable ways of having reverence for the faithful departed and respect for their mortal remains.", a:1,
  x:"False. The Church permits cremation, but the ashes are to be laid to rest in a sacred place such as a cemetery or columbarium. They are not to be scattered, made into jewelry, or kept at home.", r:"CDF, <a class='verse doc' href='https://www.vatican.va/roman_curia/congregations/cfaith/documents/rc_con_cfaith_doc_20160815_ad-resurgendum-cum-christo_en.html' target='_blank' rel='noopener noreferrer' aria-label='Ad resurgendum cum Christo, CDF Instruction, 2016, opens vatican.va in a new tab'>Ad resurgendum cum Christo</a> (2016); CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P80.HTM#:~:text=2301,-Autopsies%20can%20be' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 2301, opens vatican.va in a new tab'>2301</a>"},
-{n:22, s:"s4", short:"After the judgment",
+{n:22, t:"t1", p:"p4", short:"After the judgment",
  q:"Scripture tells us that after death there is the particular judgement (<a class='verse' href='https://bible.usccb.org/bible/hebrews/9?27#66009027' target='_blank' rel='noopener noreferrer' aria-label='Hebrews 9:27, opens the USCCB Bible in a new tab'>Heb. 9:27</a> and <a class='verse' href='https://bible.usccb.org/bible/2corinthians/5?10#55005010' target='_blank' rel='noopener noreferrer' aria-label='2 Corinthians 5:10, opens the USCCB Bible in a new tab'>2 Cor. 5:10</a>); what then could happen to the soul after that?",
  o:["Heaven, Hell, or Purgatory. Purgatory is the state for those who die in God’s friendship but are imperfectly purified.",
     "Because of God’s infinite mercy, all souls are redeemed and go immediately to heaven.",
     "Heaven or Hell",
     "All souls go to Purgatory until the General Resurrection at the Second Coming of Christ."], a:0,
  x:"After the particular judgment, the soul enters heaven (immediately or after purification), or hell. Purgatory is for those who die in God’s grace and friendship but are still imperfectly purified.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P2L.HTM#:~:text=1021,-Death%20puts%20an' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 1021, opens vatican.va in a new tab'>1021</a>–<a class='verse' href='https://www.vatican.va/archive/ENG0015/__P2L.HTM#:~:text=1022,-Each%20man%20receives' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 1022, opens vatican.va in a new tab'>1022</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P2N.HTM#:~:text=1030,-All%20who%20die' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 1030, opens vatican.va in a new tab'>1030</a>–<a class='verse' href='https://www.vatican.va/archive/ENG0015/__P2N.HTM#:~:text=1031,-The%20Church%20gives' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 1031, opens vatican.va in a new tab'>1031</a>"},
-{n:23, s:"s4", short:"Prayers for the dead", tf:true,
+{n:23, t:"t1", p:"p4", short:"Prayers for the dead", tf:true,
  q:"We remain connected to the Faithful Departed by the bond of charity; therefore, our prayers, good works, and Masses offered on their behalf can be extended to them to atone for sins and to assist them in being received into the life of Heaven.", a:0,
  x:"True. Through the communion of saints, the Church offers prayers for the dead, above all the Eucharistic sacrifice, along with almsgiving and works of penance.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P2B.HTM#:~:text=958,-Communion%20with%20the%20dead' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 958, opens vatican.va in a new tab'>958</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P2N.HTM#:~:text=1032,-This%20teaching%20is' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 1032, opens vatican.va in a new tab'>1032</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P41.HTM#:~:text=1371,-The%20Eucharistic%20sacrifice%20is' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 1371, opens vatican.va in a new tab'>1371</a>"},
-{n:24, s:"s4", short:"Mortal sin conditions",
+{n:24, t:"t1", p:"p4", short:"Mortal sin conditions",
  q:"St. John speaks about “deadly sin” (<a class='verse' href='https://bible.usccb.org/bible/1john/5?16#70005016' target='_blank' rel='noopener noreferrer' aria-label='1 John 5:16, opens the USCCB Bible in a new tab'>1 Jn. 5:16</a>) which we call today a ‘mortal sin’. What are condition(s) for a sin to be a mortal sin?",
  o:["Grave matter","Full knowledge","Full and deliberate consent of the will","All of the above."], a:3,
  x:"All three conditions must be met together: grave matter, full knowledge, and deliberate consent.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P6C.HTM#:~:text=1857,-For%20a%20sin' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 1857, opens vatican.va in a new tab'>1857</a>–<a class='verse' href='https://www.vatican.va/archive/ENG0015/__P6C.HTM#:~:text=1859,-Mortal%20sin%20requires' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 1859, opens vatican.va in a new tab'>1859</a>"},
-{n:25, s:"s4", short:"Mortal vs. venial", tf:true,
+{n:25, t:"t1", p:"p4", short:"Mortal vs. venial", tf:true,
  q:"Mortal and venial sins are the same thing - both destroy sanctifying grace in the soul.", a:1,
  x:"False. Mortal sin destroys charity and sanctifying grace in the soul; venial sin wounds and weakens charity but does not destroy it.", r:"CCC <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P6C.HTM#:~:text=1855,-Mortal%20sin%20destroys' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 1855, opens vatican.va in a new tab'>1855</a>, <a class='verse' href='https://www.vatican.va/archive/ENG0015/__P6C.HTM#:~:text=1861,-Mortal%20sin%20is' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 1861, opens vatican.va in a new tab'>1861</a>–<a class='verse' href='https://www.vatican.va/archive/ENG0015/__P6C.HTM#:~:text=1863,-Venial%20sin%20weakens' target='_blank' rel='noopener noreferrer' aria-label='Catechism of the Catholic Church, paragraph 1863, opens vatican.va in a new tab'>1863</a>"},
-{n:26, s:"s5", short:"Grace",
+{n:26, t:"t1", p:"p5", short:"Grace",
  q:"What best explains what ‘grace’ is?",
  o:["A very impressive way of speaking or acting",
     "The help God gives us to respond to our calling as a Christian.",
@@ -316,8 +326,10 @@ let store = load();
 function getPref(k, d){ try{ const v = localStorage.getItem("creedPrep."+k); return v===null? d : JSON.parse(v);}catch(e){return d;} }
 function setPref(k, v){ try{ localStorage.setItem("creedPrep."+k, JSON.stringify(v)); }catch(e){} }
 
+const NOTE = {date:"Nov 24, 2026", text:'The sections have been combined into one test. If you want to practice something specific, press "Choose parts"'};
 const ui = {
-  secs: new Set(getPref("secs", ["s1"])),
+  parts: new Set(getPref("parts", DEFAULT_PARTS).filter(id=>ALL_PARTS.includes(id))),
+  openTests: new Set(),
   shufQ: getPref("shufQ", false),
   shufA: getPref("shufA", false),
   statView: "last",
@@ -340,17 +352,66 @@ function buildOptions(q){
   return q.o.map((t,i)=>({t, ok:i===q.a, i}));
 }
 
-function selectedQs(){ return Q.filter(q=>ui.secs.has(q.s)); }
+function selectedQs(){ return Q.filter(q=>ui.parts.has(q.p)); }
 const plural = (n, w) => `${n} ${w}${n===1?'':'s'}`;
+
+const partsOf = t => t.parts.map(p=>p.id);
+const partCt = id => Q.filter(q=>q.p===id).length;
+const testCt = t => Q.filter(q=>q.t===t.id).length;
+const gotCt = t => Q.filter(q=>q.t===t.id && ui.parts.has(q.p)).length;
+const cnt = n => plural(n,'question');
+const testAll = t => partsOf(t).every(id=>ui.parts.has(id));
+const testSome = t => partsOf(t).some(id=>ui.parts.has(id));
+const partBoxes = t => t.parts.map(p=>`<li><label><input type="checkbox" data-part="${p.id}" ${ui.parts.has(p.id)?'checked':''}><span>${p.name}</span><span class="ct">${cnt(partCt(p.id))}</span></label></li>`).join("");
+
+function sel(){
+  return `<ul class="checks">${TESTS.map(t=>{
+    const all = testAll(t), some = testSome(t), open = ui.openTests.has(t.id) && some;
+    const ct = gotCt(t)===testCt(t) || !some ? cnt(testCt(t)) : `${gotCt(t)} of ${testCt(t)} questions`;
+    return `<li><div class="trow"><label><input type="checkbox" data-test="${t.id}" data-state="${all?'all':some?'some':'none'}" ${all?'checked':''}><span>${t.name}</span><span class="ct">${ct}</span></label>${some?`<button class="linkbtn" data-toggle="${t.id}" aria-expanded="${open}">${open?'Hide parts':'Choose parts'}</button>`:''}</div>${open?`<ul class="sub">${partBoxes(t)}</ul>`:''}</li>`;}).join("")}</ul>`;
+}
+function focusKey(el){
+  for(const k of ["part","test","toggle"]) if(el.dataset && el.dataset[k]!==undefined) return `[data-${k}="${el.dataset[k]}"]`;
+  return null;
+}
+function changed(){
+  TESTS.forEach(t=>{ if(!testSome(t)) ui.openTests.delete(t.id); });
+  setPref("parts",[...ui.parts]); renderSel(); refreshStart();
+}
+function renderSel(){
+  const box = document.getElementById("sel");
+  const ae = document.activeElement, fk = ae && box.contains(ae) ? focusKey(ae) : null;
+  const pid = ae && ae.dataset ? ae.dataset.part : undefined;
+  box.innerHTML = sel();
+  box.querySelectorAll("[data-part]").forEach(b=>b.onchange=()=>{ b.checked ? ui.parts.add(b.dataset.part) : ui.parts.delete(b.dataset.part); changed(); });
+  box.querySelectorAll("input[data-test]").forEach(b=>{
+    const t = TESTS.find(x=>x.id===b.dataset.test);
+    if(b.dataset.state==="some") b.indeterminate = true;
+    b.onchange=()=>{ partsOf(t).forEach(id=>b.checked ? ui.parts.add(id) : ui.parts.delete(id)); changed(); };
+  });
+  box.querySelectorAll("[data-toggle]").forEach(b=>b.onclick=()=>{
+    const id = b.dataset.toggle; ui.openTests.has(id) ? ui.openTests.delete(id) : ui.openTests.add(id);
+    renderSel();
+  });
+  if(fk){
+    let el = box.querySelector(fk);
+    if(!el && pid){ const t = TESTS.find(x=>partsOf(x).includes(pid)); el = box.querySelector(`[data-test="${t.id}"]`); }
+    if(el) el.focus();
+  }
+}
+function refreshStart(){
+  const n = selectedQs().length;
+  document.getElementById("startBtn").disabled = !n;
+  document.getElementById("startNote").textContent = n ? plural(n,'question') : "Pick at least one test";
+}
 
 function renderHome(){
   quiz = null;
   app.innerHTML = `
+  <p class="vnote"><b>Updated ${NOTE.date}.</b> ${NOTE.text}</p>
   <section>
-    <div class="head-row"><h2>Sections</h2><button class="linkbtn" id="allSecs"></button></div>
-    <ul class="checks">
-      ${SECTIONS.map(s=>{const c=Q.filter(q=>q.s===s.id).length;return `<li><label><input type="checkbox" data-sec="${s.id}" ${ui.secs.has(s.id)?'checked':''}><span>${s.name}</span><span class="ct">${plural(c,'question')}</span></label></li>`}).join("")}
-    </ul>
+    <h2>Tests</h2>
+    <div id="sel"></div>
   </section>
   <section>
     <h2>Options</h2>
@@ -365,25 +426,11 @@ function renderHome(){
   </div>
   <section class="stats" id="stats"></section>
   <footer class="site-foot"><p>For help or to report a problem with this site, contact rockstarbodhi@gmail.com.</p></footer>`;
-  const refresh = () => {
-    const n = selectedQs().length;
-    document.getElementById("startBtn").disabled = !n;
-    document.getElementById("startNote").textContent = n ? plural(n,'question') : "Pick at least one section";
-    document.getElementById("allSecs").textContent = ui.secs.size===SECTIONS.length ? "Clear all" : "Select all";
-  };
-  app.querySelectorAll("[data-sec]").forEach(b=>b.onchange=()=>{
-    const id=b.dataset.sec; b.checked ? ui.secs.add(id) : ui.secs.delete(id); setPref("secs",[...ui.secs]); refresh();
-  });
-  document.getElementById("allSecs").onclick=()=>{
-    ui.secs = ui.secs.size===SECTIONS.length ? new Set() : new Set(SECTIONS.map(s=>s.id));
-    setPref("secs",[...ui.secs]);
-    app.querySelectorAll("[data-sec]").forEach(b=>b.checked = ui.secs.has(b.dataset.sec));
-    refresh();
-  };
+  renderSel();
+  refreshStart();
   document.getElementById("shufQ").onchange=e=>{ui.shufQ=e.target.checked;setPref("shufQ",ui.shufQ);};
   document.getElementById("shufA").onchange=e=>{ui.shufA=e.target.checked;setPref("shufA",ui.shufA);};
   document.getElementById("startBtn").onclick=()=>startQuiz(selectedQs());
-  refresh();
   ui.statPage = 0;
   renderStats();
   window.scrollTo({top:0});
